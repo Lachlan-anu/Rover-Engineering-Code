@@ -1,0 +1,204 @@
+//declare pins
+# define echoPin 7 //echo pin
+# define trigPin 8 //trigger pin
+# include <Servo.h>
+float distance;
+
+Servo servo; //create servo
+int angle = 0; //variable to store servo angle
+
+// establish a variable to track the duration of the echo
+long duration; //output from sonar module
+
+//int distance; //variable for distance
+
+int duration1 =0;
+int duration2 =0;
+int duration3 =0;
+
+int distance1 =0;
+int distance2 =0;
+int distance3 =0;
+
+
+int readingOne = 0;
+int readingTwo = 0;
+int readingThree = 0;
+
+int angleOne = 120; // 120 degrees to the left
+int angleTwo = -120; // 120 degrees to the right
+
+
+const int enablePin1 = 9; //H-bridge enable pin 1,2EN
+const int enablePin7 = 4; //H-bridge enable pin 2A
+const int enablePin2 = 3; //H-bridge enable pin 1A
+
+const int enablePin9 = 10; //H-bridge enable pin 3,4EN
+const int enablePin10 = 5; //H-bridge enable pin 3A
+const int enablePin15 = 6; //H-bridge enable pin 4A
+
+const int turnDistance = 25; // test
+
+void motor1F() 
+{
+  //function to turn motor 1 forward
+  //NOTE: forward depended on motor orientation, 
+  //and is denoted by + rotation
+  analogWrite(enablePin1, 255);
+  analogWrite(enablePin7, 255);
+  analogWrite(enablePin2, 0);
+}
+
+void motor2F()
+{
+  //function to turn motor 2 forward
+  analogWrite(enablePin9, 255);
+  analogWrite(enablePin10, 237.5);
+  analogWrite(enablePin15, 0);
+}
+
+void motor1N() 
+{
+  //function to turn motor 1 off
+  analogWrite(enablePin1, 0);
+  analogWrite(enablePin7, 0);
+  analogWrite(enablePin2, 0);
+}
+
+void motor2N()
+{
+  //function to turn motor 2 off
+  analogWrite(enablePin9, 0);
+  analogWrite(enablePin10, 255);
+  analogWrite(enablePin15, 0);
+}
+
+void motor1R() 
+{
+  //function to turn motor 1 reverse
+  analogWrite(enablePin1, 255);
+  analogWrite(enablePin7, 0);
+  analogWrite(enablePin2, 255);
+}
+
+void motor2R()
+{
+  //function to turn motor 2 reverse
+  analogWrite(enablePin9, 255);
+  analogWrite(enablePin10, 0);
+  analogWrite(enablePin15, 255);
+}
+
+void setup()
+{
+  Serial.begin(9600);
+ 
+  //setup pins, trigger pin is an output
+  //ecco pin receives the input
+  pinMode(trigPin, OUTPUT);
+  pinMode(echoPin, INPUT);
+ 
+  //1,2EN Arduino digital pin 9 connects to H-bridge enable pin
+  pinMode(enablePin1, OUTPUT);
+  //2A Arduino digital pin 4 connects to motor switch
+  pinMode(enablePin7, OUTPUT);
+  //1A Arduino digital pin 3 connects to motor switch
+  pinMode(enablePin2, OUTPUT);
+ 
+  //3,4EN Arduino digital pin 10 connects to H-bridge enable pin
+  pinMode(enablePin9, OUTPUT);
+  //3A Arduino digital pin 5 connects to motor switch
+  pinMode(enablePin10, OUTPUT);
+  //4A Arduino digital pin 6 connects to motor switch
+  pinMode(enablePin15, OUTPUT);
+ 
+  //attach servo to pin 2
+  servo.attach(2);
+  servo.write(angle);
+ 
+  //set initial values of H-bridge pins:
+  //function for motor 1: turn right
+  analogWrite(enablePin1, 255);
+  analogWrite(enablePin7, 0);
+  analogWrite(enablePin2, 255);
+  
+  //function for motor 2: turn right
+  analogWrite(enablePin9, 255);
+  analogWrite(enablePin10, 0);
+  analogWrite(enablePin15, 255);
+  
+}
+
+void takeReading(){
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(5);
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+ 
+}
+
+void loop()
+{
+  servo.write(90);
+  takeReading();
+  duration = pulseIn(echoPin, HIGH);
+  int distanceAhead = duration * 0.034 / 2;
+  Serial.print("distance Ahead:");
+  Serial.print(distanceAhead);
+  Serial.println();
+  delay(500);
+ 
+  if (distanceAhead>8){
+    motor1F();
+    motor2F();
+    Serial.println("moving Forward");
+  }else{
+    Serial.println("thinking...");
+    // take reading from 0 degrees
+    servo.write(0);
+   
+    // then take a readings
+    takeReading();
+    duration1 = pulseIn(echoPin, HIGH);
+    distance1 = duration1 * 0.034 / 2; // store this reading as distance 1
+    Serial.println("distance 1:");
+    Serial.println(distance1);
+    delay(5000);
+   
+      // take reading from 180 degrees
+    servo.write(180);
+
+    // then take a readings
+    takeReading();
+    duration3 = pulseIn(echoPin, HIGH);
+    distance3 = duration3 * 0.034 / 2; // store this reading as distance 1
+
+    Serial.println("distance 3:");
+    Serial.println(distance3);
+
+    delay(5000);
+ 
+    if (distance1>distance3){
+      Serial.println("turning 90 degrees right");
+    motor1R();
+        motor2F();
+        delay(1525); // turn 90 degrees right
+      servo.write(90);
+        takeReading();
+        duration = pulseIn(echoPin, HIGH);
+        int distanceAhead = duration * 0.034 / 2;
+    }else{
+    Serial.println("turning 90 degrees right");
+      motor2R();
+        motor1F();
+        delay(1525); // turn 90 degrees right
+      servo.write(90);
+        takeReading();
+        duration = pulseIn(echoPin, HIGH);
+        int distanceAhead = duration * 0.034 / 2;
+    }
+ 
+  }
+
+}
