@@ -15,11 +15,12 @@ long duration; //output from sonar module
 int duration1 =0;
 int duration2 =0;
 int duration3 =0;
+int duration4 =0;
 
 int distance1 =0;
 int distance2 =0;
 int distance3 =0;
-
+int distance4 =0;
 
 int readingOne = 0;
 int readingTwo = 0;
@@ -39,55 +40,65 @@ const int enablePin15 = 6; //H-bridge enable pin 4A
 
 const int turnDistance = 25; // test
 
-void motor1F() 
+void motor1F()
 {
   //function to turn motor 1 forward
-  //NOTE: forward depended on motor orientation, 
+  //NOTE: forward depended on motor orientation,
   //and is denoted by + rotation
-  analogWrite(enablePin1, 255);
-  analogWrite(enablePin7, 255);
-  analogWrite(enablePin2, 0);
+  digitalWrite(enablePin1, HIGH);
+  digitalWrite(enablePin7, LOW);
+  digitalWrite(enablePin2, HIGH);
 }
 
-void motor2F()
+void motor2R()
 {
   //function to turn motor 2 forward
-  analogWrite(enablePin9, 255);
-  analogWrite(enablePin10, 237.5);
-  analogWrite(enablePin15, 0);
+  digitalWrite(enablePin9, HIGH);
+  digitalWrite(enablePin10, HIGH);
+  digitalWrite(enablePin15, LOW);
 }
 
-void motor1N() 
+void motor1N()
 {
   //function to turn motor 1 off
-  analogWrite(enablePin1, 0);
-  analogWrite(enablePin7, 0);
-  analogWrite(enablePin2, 0);
+  digitalWrite(enablePin1, LOW);
+  digitalWrite(enablePin7, LOW);
+  digitalWrite(enablePin2, HIGH);
 }
 
 void motor2N()
 {
   //function to turn motor 2 off
-  analogWrite(enablePin9, 0);
-  analogWrite(enablePin10, 255);
-  analogWrite(enablePin15, 0);
+  digitalWrite(enablePin9, LOW);
+  digitalWrite(enablePin10, HIGH);
+  digitalWrite(enablePin15, LOW);
 }
 
-void motor1R() 
+void motor1R()
 {
   //function to turn motor 1 reverse
-  analogWrite(enablePin1, 255);
-  analogWrite(enablePin7, 0);
-  analogWrite(enablePin2, 255);
+  digitalWrite(enablePin1, HIGH);
+  digitalWrite(enablePin7, HIGH);
+  digitalWrite(enablePin2, LOW);
 }
 
-void motor2R()
+void motor2F()
 {
   //function to turn motor 2 reverse
-  analogWrite(enablePin9, 255);
-  analogWrite(enablePin10, 0);
-  analogWrite(enablePin15, 255);
+  digitalWrite(enablePin9, HIGH);
+  digitalWrite(enablePin10, LOW);
+  digitalWrite(enablePin15, HIGH);
 }
+
+void stopMoving(){
+  digitalWrite(enablePin1, LOW);
+  digitalWrite(enablePin7, LOW);
+  digitalWrite(enablePin2, LOW);
+  digitalWrite(enablePin9, LOW);
+  digitalWrite(enablePin10, LOW);
+  digitalWrite(enablePin15, LOW);
+}
+
 
 void setup()
 {
@@ -116,17 +127,17 @@ void setup()
   servo.attach(2);
   servo.write(angle);
  
-  //set initial values of H-bridge pins:
-  //function for motor 1: turn right
-  analogWrite(enablePin1, 255);
-  analogWrite(enablePin7, 0);
-  analogWrite(enablePin2, 255);
-  
-  //function for motor 2: turn right
-  analogWrite(enablePin9, 255);
-  analogWrite(enablePin10, 0);
-  analogWrite(enablePin15, 255);
-  
+//  //set initial values of H-bridge pins:
+//  //function for motor 1: turn right
+//  digitalWrite(enablePin1, HIGH);
+//  digitalWrite(enablePin7, LOW);
+//  digitalWrite(enablePin2, HIGH);
+//
+//  //function for motor 2: turn right
+//  digitalWrite(enablePin9, HIGH);
+//  digitalWrite(enablePin10, LOW);
+//  digitalWrite(enablePin15, HIGH);
+ 
 }
 
 void takeReading(){
@@ -138,8 +149,41 @@ void takeReading(){
  
 }
 
+void moveForward(){
+    motor1F();
+    motor2F();
+  }
+
+void turn45R(){
+    motor1F();
+    motor2R();
+    delay(875);
+  }
+
+void turn45L(){
+    motor2F();
+    motor1R();
+    delay(875);
+  }
+
+void turn90R(){
+    motor2F();
+    motor1R();
+    delay(1750);
+  }
+
+void turn90L(){
+    motor2F();
+    motor1R();
+    delay(1750);
+  }
+
+
 void loop()
 {
+
+ 
+
   servo.write(90);
   takeReading();
   duration = pulseIn(echoPin, HIGH);
@@ -149,56 +193,102 @@ void loop()
   Serial.println();
   delay(500);
  
-  if (distanceAhead>8){
+  if (distanceAhead>30){
     motor1F();
     motor2F();
     Serial.println("moving Forward");
   }else{
+    // --------------------------------------------checking side distances------------------------------------
+    stopMoving();
     Serial.println("thinking...");
     // take reading from 0 degrees
-    servo.write(0);
    
-    // then take a readings
+    servo.write(0);
     takeReading();
     duration1 = pulseIn(echoPin, HIGH);
     distance1 = duration1 * 0.034 / 2; // store this reading as distance 1
-    Serial.println("distance 1:");
+    Serial.println("right distance:");
     Serial.println(distance1);
-    delay(5000);
+    delay(500);
    
-      // take reading from 180 degrees
-    servo.write(180);
-
-    // then take a readings
+    servo.write(60);
+    takeReading();
+    duration2 = pulseIn(echoPin, HIGH);
+    distance2 = duration3 * 0.034 / 2; // store this reading as distance 1
+    Serial.println("60 degree right distance:");
+    Serial.println(distance2);
+    delay(500);
+   
+    servo.write(120);
     takeReading();
     duration3 = pulseIn(echoPin, HIGH);
     distance3 = duration3 * 0.034 / 2; // store this reading as distance 1
-
-    Serial.println("distance 3:");
+    Serial.println("120 degree left distance:");
     Serial.println(distance3);
-
-    delay(5000);
+    delay(500);
+   
+    servo.write(180);
+    takeReading();
+    duration4 = pulseIn(echoPin, HIGH);
+    distance4 = duration3 * 0.034 / 2; // store this reading as distance 1
+    Serial.println("150 degree left distance:");
+    Serial.println(distance4);
+    delay(500);
+//-----------------------------------------------decision making ---------------------------------------
  
-    if (distance1>distance3){
+    if((3*distance1)>=(distance2+distance3+distance4)){
+      stopMoving();
       Serial.println("turning 90 degrees right");
-    motor1R();
-        motor2F();
-        delay(1525); // turn 90 degrees right
-      servo.write(90);
-        takeReading();
-        duration = pulseIn(echoPin, HIGH);
-        int distanceAhead = duration * 0.034 / 2;
-    }else{
-    Serial.println("turning 90 degrees right");
-      motor2R();
-        motor1F();
-        delay(1525); // turn 90 degrees right
-      servo.write(90);
-        takeReading();
-        duration = pulseIn(echoPin, HIGH);
-        int distanceAhead = duration * 0.034 / 2;
+      servo.write(90); // reset servo to front
+      turn90R();
+      stopMoving();
+      takeReading();
+      duration = pulseIn(echoPin, HIGH);
+      int distanceAhead = duration * 0.034 / 2;
+   
     }
+      else if ((3*distance2)>=(distance1+distance3+distance4)){
+      stopMoving();
+      Serial.println("turning 45 degrees right");
+      servo.write(90); // reset servo to front
+      turn45R();
+      stopMoving();
+      takeReading();
+      duration = pulseIn(echoPin, HIGH);
+      int distanceAhead = duration * 0.034 / 2;
+   
+      }
+       
+        else if ((3*distance3)>=(distance1+distance2+distance4)){
+        stopMoving();
+        Serial.println("turning 45 degrees left");
+        servo.write(90); // reset servo to front
+        turn45L();
+        stopMoving();
+        takeReading();
+        duration = pulseIn(echoPin, HIGH);
+        int distanceAhead = duration * 0.034 / 2;
+       
+        }
+          else if ((3*distance4)>=(distance1+distance2+distance3)){
+          stopMoving();
+          Serial.println("turning 90 degrees left");
+          servo.write(90); // reset servo to front
+          turn90R();
+          stopMoving();
+          takeReading();
+          duration = pulseIn(echoPin, HIGH);
+          int distanceAhead = duration * 0.034 / 2;
+         
+         }
  
   }
 
+
+
+
+
+ 
+  // decision making:
+ 
 }
